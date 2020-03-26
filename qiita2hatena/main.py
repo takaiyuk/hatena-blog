@@ -24,6 +24,8 @@ def parse_args() -> argparse.Namespace:
 
 
 class Qiita:
+    """ref.) https://github.com/atusy/qiita/blob/master/qiita.Rmd"""
+
     def __init__(self, config: str) -> None:
         self.user = config["QIITA_USER"]
         self.output_dir = config["OUTPUT_DIR"]
