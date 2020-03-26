@@ -1,3 +1,4 @@
+import argparse
 import base64
 from datetime import datetime
 import hashlib
@@ -13,6 +14,13 @@ import yaml
 def load_yaml(path: str = "config.yml") -> dict:
     with open(path, "r") as f:
         return yaml.load(f)
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--production", action="store_true")
+    args = parser.parse_args()
+    return args
 
 
 class Qiita:
@@ -59,11 +67,12 @@ class Qiita:
 class Hatena:
     """ref.) https://qiita.com/virtual_techX/items/5179b73576d86a89868e"""
 
-    def __init__(self, config: str) -> None:
+    def __init__(self, config: str, argparse.Namespace) -> None:
         self.output_dir = config["OUTPUT_DIR"]
         self.user = config["HATENA_USER"]
         self.blog = config["HATENA_BLOG"]
         self.apikey = config["HATENA_APIKEY"]
+        self.is_draft = False if args.production else True
 
     def create_hatena_text(
         self, title: str, body: str, categories: list, is_draft: bool
@@ -132,5 +141,6 @@ class Hatena:
 if __name__ == "__main__":
     warnings.filterwarnings("ignore")
     config = load_yaml()
+    args = parse_args()
     Qiita(config).save()
-    Hatena(config).post()
+    Hatena(config, args).post()
