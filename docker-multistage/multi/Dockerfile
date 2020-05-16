@@ -1,5 +1,5 @@
-# docker build . -t jupyter -f ./Dockerfile_jupyter
-# docker run -d --name kaggle-m5 -p 8888:8888 -v ${PWD}:/workspace/ -v ${HOME}/.kaggle:/root/.kaggle/ jupyter
+# docker build . -t multi -f ./Dockerfile
+# docker run -d --name multi-container -p 8888:8888 -v ${PWD}:/workspace/ -v ${HOME}/.kaggle:/root/.kaggle/ multi
 # docker exec -it ${CONTAINER_ID} /bin/bash
 # jupyter notebook list
 FROM python:3.7.7-buster as builder
