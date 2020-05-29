@@ -1,3 +1,6 @@
 .DS_Store
 __pycache__
 config.yml
+ml-clf-lyric/drivers/*
+ml-clf-lyric/data/*
+!.gitkeep
