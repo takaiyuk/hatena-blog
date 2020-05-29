@@ -2,5 +2,6 @@
 __pycache__
 config.yml
 ml-clf-lyric/drivers/*
-ml-clf-lyric/data/*
+ml-clf-lyric/data/raw/*
+ml-clf-lyric/data/processed/*
 !.gitkeep

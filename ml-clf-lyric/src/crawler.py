@@ -128,7 +128,7 @@ class Crawler:
                 page_sources[i] = page_source
 
             # 保存
-            filepath = f"data/{artist_name}"
+            filepath = f"data/raw/{artist_name}.jbl"
             self._save(page_sources, filepath)
 
         finally:
