@@ -1,6 +1,5 @@
-import subprocess
 import argparse
-
+import subprocess
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -8,13 +7,13 @@ parser.add_argument(
     help="your os (default is mac).",
     type=str,
     choices=["mac", "linux"],
-    default="linux",
+    default="mac",
 )
 parser.add_argument(
     "--version",
     help="Chromedriver version (need to be compatibility with your chrome)",
     type=str,
-    default="81.0.4044.138",
+    default="83.0.4103.39",
 )
 args = parser.parse_args()
 
