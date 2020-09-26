@@ -1,36 +1,54 @@
 import os
 import random
 import time
-from typing import Any
+from abc import ABCMeta
+from typing import Any, List
 
 import joblib
 import selenium
 from selenium import webdriver
 from selenium.webdriver.support.ui import Select
 
-from src.const import DRIVER_PATH, NAME_URL_DICT, TOP_URL
+from src.const import NAME_URL_DICT, PATH, TOP_URL
 
 
 class Browser:
-    def __init__(self, driver: webdriver.Chrome) -> None:
+    def __init__(self, driver) -> None:
         self.driver = driver
 
-    def _get_random(self, a: int = 1, b: int = 3) -> float:
+    def _get_random(self, a: float = 0.8, b: float = 1.2) -> None:
         return random.uniform(a, b)
+
+    def _sleep(self, a: float = 0.8, b: float = 1.2) -> None:
+        ts = self._get_random(a, b)
+        time.sleep(ts)
 
     def back(self) -> None:
         self.driver.back()
-        self.sleep(1, 2)
+        self._sleep()
 
     def click(self, xpath: str) -> None:
         self.driver.find_element_by_xpath(xpath).click()
+        self._sleep()
+
+    def click_on_class(self, class_):
+        self.driver.find_elements_by_class_name(class_).click()
+        self._sleep()
+
+    def current_url(self) -> str:
+        return self.driver.current_url
+
+    def find_class_element(self, class_: str) -> List[str]:
+        class_list = self.driver.find_elements_by_class_name(class_)
+        self._sleep()
+        return class_list
 
     def get(self, url: str) -> None:
         self.driver.get(url)
-        self.sleep(1, 2)
+        self._sleep()
 
-    def get_url(self) -> str:
-        return self.driver.current_url
+    def quit(self):
+        self.driver.quit()
 
     def save(self, filepath: str) -> None:
         html = self.driver.page_source
@@ -42,41 +60,41 @@ class Browser:
 
     def send(self, xpath: str, string: str) -> None:
         self.driver.find_element_by_xpath(xpath).send_keys(string)
-        self.sleep(1, 1)
-
-    def sleep(self, a: int, b: int) -> None:
-        ts = self._get_random(a, b)
-        time.sleep(ts)
+        self._sleep()
 
     def source(self) -> str:
         return self.driver.page_source
 
 
-class Driver:
-    def __init__(self) -> None:
+class AbstractCrawler(metaclass=ABCMeta):
+    def __init__(self, name, is_headless: bool = True) -> None:
+        self.name = name
+
         options = webdriver.ChromeOptions()
-        options.add_argument("--headless")
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-gpu")
-        options.add_argument("--window-size=1280x1696")
-        # options.add_argument("--disable-application-cache")
-        # options.add_argument("--disable-infobars")
-        # options.add_argument("--hide-scrollbars")
-        # options.add_argument("--enable-logging")
-        # options.add_argument("--log-level=0")
-        # options.add_argument("--single-process")
-        # options.add_argument("--ignore-certificate-errors")
-        if os.path.exists(DRIVER_PATH):
-            self.driver = webdriver.Chrome(executable_path=DRIVER_PATH, options=options)
+        if is_headless:
+            options.add_argument("--headless")
+            options.add_argument("--no-sandbox")
+            options.add_argument("--disable-gpu")
+            options.add_argument("--window-size=1280x1696")
+            options.add_argument("--disable-application-cache")
+            options.add_argument("--disable-infobars")
+            options.add_argument("--hide-scrollbars")
+            options.add_argument("--enable-logging")
+            options.add_argument("--log-level=0")
+            options.add_argument("--single-process")
+            options.add_argument("--ignore-certificate-errors")
+            options.add_argument("--disable-dev-shm-usage")
+        if os.path.exists(PATH["driver"]["default"]):
+            executable_path = PATH["driver"]["default"]
+        elif os.path.exists(PATH["driver"]["local"]):
+            executable_path = PATH["driver"]["local"]
         else:
-            self.driver = webdriver.Chrome(options=options)
+            raise Exception("driver path is not found")
+        driver = webdriver.Chrome(executable_path=executable_path, options=options)
+        self.browser = Browser(driver)
 
 
-class Crawler:
-    def __init__(self) -> None:
-        self.driver = Driver().driver
-        self.browser = Browser(self.driver)
-
+class Crawler(AbstractCrawler):
     def _get_lyric(self, idx: int) -> str:
         xpath = f'//*[@id="ly{idx}"]/p[1]/a'
         title = self.browser.driver.find_element_by_xpath(xpath).text.split("\n")[0]
@@ -91,20 +109,20 @@ class Crawler:
     def _save(self, obj: Any, p: str) -> None:
         joblib.dump(obj, p, compress=3)
 
-    def run(self, artist_name: str) -> None:
+    def run(self) -> None:
         try:
             # トップページ
             self.browser.get(TOP_URL)
 
-            if artist_name == "AL":
-                self.browser.get(NAME_URL_DICT[artist_name])
+            if self.name == "AL":
+                self.browser.get(NAME_URL_DICT[self.name])
             else:
                 # 検索でドロップダウンから歌手名を選択
                 opsel_element = self.browser.driver.find_element_by_id("opsel")
                 Select(opsel_element).select_by_value("2")
 
                 # 検索で歌手名を入力、検索ボタンをクリック
-                self.browser.send('//*[@id="keyword"]', artist_name)
+                self.browser.send('//*[@id="keyword"]', self.name)
                 self.browser.click('//*[@id="ebox"]/div[2]/form/input[6]')
 
                 # 検索結果から一番上をクリック
@@ -129,15 +147,9 @@ class Crawler:
                 page_sources[i] = page_source
 
             # 保存
-            filepath = f"data/raw/{artist_name}.jbl"
+            filepath = f"data/raw/{self.name}.jbl"
             self._save(page_sources, filepath)
 
         finally:
             # プロセス消す
-            self.driver.quit()
-
-
-if __name__ == "__main__":
-    for name in NAME_URL_DICT.keys():
-        print(f"==={name}===")
-        Crawler().run(artist_name=name)
+            self.browser.quit()

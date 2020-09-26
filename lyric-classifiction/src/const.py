@@ -1,5 +1,8 @@
+PATH = {
+    "driver": {"default": "/usr/bin/chromedriver", "local": "./drivers/chromedriver"},
+}
+
 TOP_URL = "http://j-lyric.net/"
-DRIVER_PATH = "./drivers/chromedriver"
 NAME_URL_DICT = {
     "AL": "http://j-lyric.net/artist/a05b368/",
     "andymori": "http://j-lyric.net/artist/a050bf1/",

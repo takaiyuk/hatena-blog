@@ -1,10 +1,8 @@
 # custom
 .DS_Store
 .vscode
+*.jbl
 config.yml
-ml-clf-lyric/drivers/*
-ml-clf-lyric/data/raw/*
-ml-clf-lyric/data/processed/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

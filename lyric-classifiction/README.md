@@ -1,3 +1,15 @@
+# Lyric Classification
+
+## Setup & Run
+
+### Crawler
+
 ```
-python src/utils/download_chromedriver.py --os mac --version 83.0.4103.39
+$ ./docker/build.sh
+$ ./docker/run.sh
+```
+
+```
+$ ./shell/download_chromedriver.sh
+$ python run.py --headless
 ```
