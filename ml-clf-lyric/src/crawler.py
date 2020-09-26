@@ -111,6 +111,7 @@ class Crawler:
                 self.browser.click('//*[@id="mnb"]/div[2]/p[1]/a')
 
             # リスト数を取得
+            num_list = 1000
             for i in range(1000):
                 i += 1
                 try:
