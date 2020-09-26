@@ -5,8 +5,8 @@
 ### Crawler
 
 ```
-$ ./docker/build.sh
-$ ./docker/run.sh
+$ ./docker/crawler/build.sh
+$ ./docker/crawler/run.sh
 ```
 
 ```
