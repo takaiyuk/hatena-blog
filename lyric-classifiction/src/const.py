@@ -35,9 +35,8 @@ class InterimPath:
 
 @dataclass
 class ProcessedPath:
-    al: str = f"{Prefix.processed}/al.jbl"
-    andymori: str = f"{Prefix.processed}/andymori.jbl"
-    nagasawa: str = f"{Prefix.processed}/nagasawa.jbl"
+    train: str = f"{Prefix.processed}/train.jbl"
+    test: str = f"{Prefix.processed}/test.jbl"
 
 
 @dataclass
