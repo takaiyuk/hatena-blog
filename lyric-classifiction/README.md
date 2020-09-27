@@ -18,7 +18,7 @@ $ python run.py crawler --headless
 ### Preprocess
 
 ```
-$ ./docker/preprocess/pull.sh
+$ ./docker/preprocess/build.sh
 $ ./docker/preprocess/run.sh
 $ ./docker/preprocess/exec.sh
 root@xxx:/workspace# python run.py preprocess
