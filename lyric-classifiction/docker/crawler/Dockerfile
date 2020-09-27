@@ -1,5 +1,5 @@
 FROM python:3.8.3-slim-buster
-COPY ./requirements.txt .
+COPY ./docker/crawler/requirements.txt .
 ENV APP_HOME /workspace
 ENV PYTHONPATH=/usr/local:$PYTHONPATH
 ENV CHROMEDRIVER_VERSION 85.0.4183.87
@@ -18,6 +18,5 @@ RUN apt-get update -y \
   && unzip $CHROMEDRIVER_PREFIX/chromedriver*.zip -d $CHROMEDRIVER_PREFIX \
   && rm $CHROMEDRIVER_PREFIX/chromedriver*.zip
 WORKDIR $APP_HOME
-COPY . .
 
 ENTRYPOINT ["python"]
