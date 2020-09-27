@@ -3,6 +3,7 @@ import argparse
 from src.const import NAME_URL_DICT
 from src.crawler import Crawler
 from src.preprocess import Preprocesssor
+from src.train import Trainer
 
 
 def run_crawler():
@@ -16,8 +17,8 @@ def run_preprocess():
     Preprocesssor().run()
 
 
-# def run_train():
-#     Trainer().run()
+def run_train():
+    Trainer().run()
 
 
 if __name__ == "__main__":
@@ -28,7 +29,7 @@ if __name__ == "__main__":
     parser_crawler.set_defaults(func=run_crawler)
     parser_preprocess = subparsers.add_parser("preprocess", help="see `preprocess -h`")
     parser_preprocess.set_defaults(func=run_preprocess)
-    # parser_train = subparsers.add_parser("train", help="see `train -h`")
-    # parser_train.set_defaults(func=run_train)
+    parser_train = subparsers.add_parser("train", help="see `train -h`")
+    parser_train.set_defaults(func=run_train)
     args = parser.parse_args()
     args.func()

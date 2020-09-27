@@ -27,6 +27,6 @@ root@xxx:/workspace# python run.py preprocess
 ### Train
 
 ```
-$ ./docker/train/pull.sh
+$ ./docker/train/build.sh
 $ ./docker/train/run.sh
 ```
