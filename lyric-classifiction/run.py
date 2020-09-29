@@ -1,12 +1,10 @@
 import argparse
 
-from src.const import NAME_URL_DICT
-from src.crawler import Crawler
-from src.preprocess import Preprocesssor
-from src.train import Trainer
-
 
 def run_crawler():
+    from src.const import NAME_URL_DICT
+    from src.crawler import Crawler
+
     is_headless = args.headless
     for name in NAME_URL_DICT.keys():
         print(f"==={name}===")
@@ -14,10 +12,14 @@ def run_crawler():
 
 
 def run_preprocess():
+    from src.preprocess import Preprocesssor
+
     Preprocesssor().run()
 
 
 def run_train():
+    from src.train import Trainer
+
     Trainer().run()
 
 
