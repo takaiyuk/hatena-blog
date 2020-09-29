@@ -24,6 +24,11 @@ $ ./docker/preprocess/exec.sh
 root@xxx:/workspace# python run.py preprocess
 ```
 
+local
+```
+$ python run.py preprocess
+```
+
 ### Train
 
 ```
@@ -31,4 +36,9 @@ $ ./docker/train/build.sh
 $ ./docker/train/run.sh
 $ ./docker/train/exec.sh
 root@xxx:/workspace# python run.py train
+```
+
+local
+```
+$ python run.py train
 ```
