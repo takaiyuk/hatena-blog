@@ -37,9 +37,9 @@ class Trainer:
         test: pd.DataFrame = joblib.load(DataPath.processed.test)
         return ProcessedData(train=train, test=test)
 
-    def _tokenize(self, ProcessedData: ProcessedData) -> ProcessedData:
-        train = ProcessedData.train
-        test = ProcessedData.test
+    def _tokenize(self, data: ProcessedData) -> ProcessedData:
+        train = data.train
+        test = data.test
 
         tokenizer = Tokenizer()
         token_filters = [POSStopFilter(["記号", "助詞", "助動詞"])]
@@ -59,11 +59,9 @@ class Trainer:
 
         return ProcessedData(train=train, test=test)
 
-    def _vectorize(
-        self, ProcessedData: ProcessedData, n_components: int = 32
-    ) -> ProcessedData:
-        train = ProcessedData.train
-        test = ProcessedData.test
+    def _vectorize(self, data: ProcessedData, n_components: int = 32) -> ProcessedData:
+        train = data.train
+        test = data.test
 
         vectorizer = TfidfVectorizer(ngram_range=(1, 2), dtype=np.float32)
         X = vectorizer.fit_transform(train["word_separation"].values)
@@ -80,9 +78,9 @@ class Trainer:
 
         return ProcessedData(train=train, test=test)
 
-    def _train(self, ProcessedData: ProcessedData) -> TrainData:
-        train = ProcessedData.train
-        test = ProcessedData.test
+    def _train(self, data: ProcessedData) -> TrainData:
+        train = data.train
+        test = data.test
 
         svd_cols = [col for col in train.columns if col.startswith("svd_")]
         X_train, X_valid, y_train, y_valid = train_test_split(
@@ -120,6 +118,7 @@ class Trainer:
         )
         X_test["pred"] = ["oyamada" if p == 0 else "nagasawa" for p in pred_test]
         X_test = X_test.loc[:, ["pred"]].join(test.loc[:, ["title"]], how="left")
+        X_test = X_test.loc[:, ["title", "pred"]]
 
         return TrainData(
             X_train=X_train,
@@ -135,3 +134,4 @@ class Trainer:
         data = self._vectorize(data, n_components=32)
         result = self._train(data)
         joblib.dump(result, "./result.jbl", compress=3)
+        result.X_test.to_csv("./test.csv", index=False)
