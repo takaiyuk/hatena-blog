@@ -1,7 +1,6 @@
 # custom
 .DS_Store
 .vscode
-*.ipynb
 *.jbl
 config.yml
 
