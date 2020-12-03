@@ -22,6 +22,9 @@ class BasePlotly(metaclass=ABCMeta):
             yaxis=dict(title=ytitle, ticklen=5, gridwidth=2),
         )
 
+    def _save(self, fig: go.Figure, path: str):
+        fig.write_image(path, width=1200, height=600)
+
     @abstractmethod
     def show(self):
         pass
@@ -37,6 +40,7 @@ class BarPlotly(BasePlotly):
         title: Optional[str] = None,
         xtitle: Optional[str] = None,
         ytitle: Optional[str] = None,
+        save_path: Optional[str] = None,
     ):
         orientation = "v"
         color_col = ycol
@@ -62,6 +66,8 @@ class BarPlotly(BasePlotly):
         ]
         layout = self._plotly_layout(title=title, xtitle=xtitle, ytitle=ytitle)
         fig = go.Figure(data=trace, layout=layout)
+        if save_path is not None:
+            self._save(fig, save_path)
         return py.iplot(fig, show_link=False)
 
 
@@ -74,8 +80,10 @@ class BoxPlotly(BasePlotly):
         title: Optional[str] = None,
         xtitle: Optional[str] = None,
         ytitle: Optional[str] = None,
+        save_path: Optional[str] = None,
     ):
         assert xcol is not None or ycol is not None
+
         if xcol is not None and ycol is not None:
             trace = [
                 go.Box(
@@ -90,6 +98,8 @@ class BoxPlotly(BasePlotly):
             trace = [go.Box(x=data[xcol].values, marker=dict(color=self.colors[0]))]
         layout = self._plotly_layout(title=title, xtitle=xtitle, ytitle=ytitle)
         fig = go.Figure(data=trace, layout=layout)
+        if save_path is not None:
+            self._save(fig, save_path)
         return py.iplot(fig, show_link=False)
 
 
@@ -101,6 +111,7 @@ class CountPlotly(BasePlotly):
         title: Optional[str] = None,
         xtitle: Optional[str] = None,
         ytitle: Optional[str] = None,
+        save_path: Optional[str] = None,
     ):
         trace = [
             go.Histogram(
@@ -109,6 +120,8 @@ class CountPlotly(BasePlotly):
         ]
         layout = self._plotly_layout(title=title, xtitle=xtitle, ytitle=ytitle)
         fig = go.Figure(data=trace, layout=layout)
+        if save_path is not None:
+            self._save(fig, save_path)
         return py.iplot(fig, show_link=False)
 
 
@@ -121,6 +134,7 @@ class DistPlotly(BasePlotly):
         title: Optional[str] = None,
         xtitle: Optional[str] = None,
         ytitle: Optional[str] = None,
+        save_path: Optional[str] = None,
     ):
         """
         xbins: 区間の指定
@@ -138,6 +152,8 @@ class DistPlotly(BasePlotly):
         ]
         layout = self._plotly_layout(title=title, xtitle=xtitle, ytitle=ytitle)
         fig = go.Figure(data=trace, layout=layout)
+        if save_path is not None:
+            self._save(fig, save_path)
         return py.iplot(fig, show_link=False)
 
 
@@ -153,6 +169,7 @@ class LinePlotly(BasePlotly):
         title: Optional[str] = None,
         xtitle: Optional[str] = None,
         ytitle: Optional[str] = None,
+        save_path: Optional[str] = None,
     ):
         if rangeslider is True:
             xaxis = dict(
@@ -191,6 +208,8 @@ class LinePlotly(BasePlotly):
             title=title, xaxis=xaxis, yaxis=dict(title=ytitle, ticklen=5, gridwidth=2)
         )
         fig = go.Figure(data=trace, layout=layout)
+        if save_path is not None:
+            self._save(fig, save_path)
         return py.iplot(fig, show_link=False)
 
 
@@ -204,6 +223,7 @@ class ScatterPlotly(BasePlotly):
         title: Optional[str] = None,
         xtitle: Optional[str] = None,
         ytitle: Optional[str] = None,
+        save_path: Optional[str] = None,
     ):
         trace = [
             go.Scatter(
@@ -231,4 +251,6 @@ class ScatterPlotly(BasePlotly):
             showlegend=False,
         )
         fig = go.Figure(data=trace, layout=layout)
+        if save_path is not None:
+            self._save(fig, save_path)
         return py.iplot(fig, show_link=False)
