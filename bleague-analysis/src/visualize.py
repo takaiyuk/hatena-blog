@@ -33,25 +33,31 @@ class BarPlotly(BasePlotly):
         data: pd.DataFrame,
         xcol: str,
         ycol: str,
-        textcol: Optional[str] = None,
+        is_horizontal: bool = False,
         title: Optional[str] = None,
         xtitle: Optional[str] = None,
         ytitle: Optional[str] = None,
     ):
-        if textcol is None:
-            textcol = ycol
+        orientation = "v"
+        color_col = ycol
+        text_col = ycol
+        if is_horizontal:
+            orientation = "h"
+            color_col = xcol
+            text_col = xcol
         trace = [
             go.Bar(
                 x=self._convert_to_str(data[xcol].values),
                 y=data[ycol].values,
-                text=data[textcol].values,
+                text=data[text_col].values,
                 textposition="auto",
                 marker=dict(
-                    color=data[ycol].values,
+                    color=data[color_col].values,
                     colorscale="Viridis",
                     showscale=True,
                     reversescale=True,
                 ),
+                orientation=orientation,
             )
         ]
         layout = self._plotly_layout(title=title, xtitle=xtitle, ytitle=ytitle)
