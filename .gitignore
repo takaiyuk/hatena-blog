@@ -1,6 +1,7 @@
 # custom
 .DS_Store
 .vscode
+bleague-analysis/data/*.csv
 *.jbl
 config.yml
 
