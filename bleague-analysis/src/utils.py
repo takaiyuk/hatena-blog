@@ -1,30 +1,45 @@
-from typing import Tuple
-
 import pandas as pd
 
 
-def join_data(
-    df_game_box: pd.DataFrame, df_game_summary: pd.DataFrame, df_team: pd.DataFrame
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    if "NameShort" not in df_game_box.columns:
-        df_game_box = df_game_box.merge(
-            df_team.loc[:, ["TeamId", "NameShort", "Division"]],
-            how="inner",
-            on="TeamId",
-        )
-        df_game_box["Player_Team"] = [
-            f"{p}_{t}" for p, t in zip(df_game_box["Player"], df_game_box["NameShort"])
-        ]
-    if "NameShort" not in df_game_summary.columns:
-        df_game_summary = df_game_summary.merge(
-            df_team.loc[:, ["TeamId", "NameShort", "Division"]],
-            how="inner",
-            on="TeamId",
-        )
-        df_game_summary = df_game_summary.sort_values(
-            ["ScheduleKey", "TeamId"]
-        ).reset_index()
-    return (df_game_box, df_game_summary)
+class FourFactors:
+    @staticmethod
+    def TOV(TOV: int, FGA: int, FTA: int) -> float:
+        """
+        TOV% = TOV / (FGA + FTA x 0.44 + TOV)
+        """
+        return TOV / (FGA + FTA * 0.44 + TOV)
+
+    @staticmethod
+    def eFG(FG2M: int, FG3M: int, FGA: int) -> float:
+        """
+        eFG% = (FG + 0.5 x 3P) / FGA
+        """
+        return (FG2M + 0.5 * FG3M) / FGA
+
+    @staticmethod
+    def ORB(ORB: int, OppDRB: int) -> float:
+        """
+        OREB% = ORB / (ORB + OppDRB)
+        """
+        return ORB / (ORB + OppDRB)
+
+    @staticmethod
+    def FT(FTA: int, FGA: int) -> float:
+        """
+        FTR = FTA / FGA
+        """
+        return FTA / FGA
+
+
+def calc_posession(FGA: int, TO: int, FTA: int, OR: int) -> float:
+    """
+        ref. https://www.nbastuffer.com/analytics101/possession/
+        - FGA: Field Goal Attempts
+        - TO: Turnovers
+        - FTA: Free Throw Attempts
+        - OR: Offensive Rebounds
+        """
+    return 0.96 * (FGA + TO + 0.44 * FTA - OR)
 
 
 def get_opponent(df_game_summary: pd.DataFrame, key_col: str) -> pd.DataFrame:
@@ -44,19 +59,9 @@ def get_opponent(df_game_summary: pd.DataFrame, key_col: str) -> pd.DataFrame:
     return df_game_summary
 
 
-def calc_possession(df_game_summary: pd.DataFrame) -> pd.DataFrame:
-    def _calc_posession(FGA: int, TO: int, FTA: int, OR: int) -> float:
-        """
-        ref. https://www.nbastuffer.com/analytics101/possession/
-        - FGA: Field Goal Attempts
-        - TO: Turnovers
-        - FTA: Free Throw Attempts
-        - OR: Offensive Rebounds
-        """
-        return 0.96 * (FGA + TO + 0.44 * FTA - OR)
-
+def get_possession(df_game_summary: pd.DataFrame) -> pd.DataFrame:
     df_game_summary["Posession"] = [
-        _calc_posession(F2GA + F3GA, TO, FTA, OR)
+        calc_posession(F2GA + F3GA, TO, FTA, OR)
         for F2GA, F3GA, TO, FTA, OR in zip(
             df_game_summary["F2GA"],
             df_game_summary["F3GA"],
@@ -69,16 +74,14 @@ def calc_possession(df_game_summary: pd.DataFrame) -> pd.DataFrame:
 
 
 def preprocess_game_summary(df_game_summary: pd.DataFrame) -> pd.DataFrame:
-    df_game_summary = calc_possession(df_game_summary)
-    for k in ["PTS", "Posession"]:
+    df_game_summary = get_possession(df_game_summary)
+    for k in ["PTS", "Posession", "OR", "DR", "TO"]:
         df_game_summary = get_opponent(df_game_summary, k)
-    df_game_summary["TO_per_Posession"] = (
-        100 * df_game_summary["TO"] / df_game_summary["Posession"]
-    )
-    df_game_summary["PTS_per_Posession"] = (
-        100 * df_game_summary["PTS"] / df_game_summary["Posession"]
-    )
-    df_game_summary["PTS_opponent_per_Posession"] = (
-        100 * df_game_summary["PTS_opponent"] / df_game_summary["Posession_opponent"]
-    )
+    for num, denom in zip(
+        ["TO", "TO_opponent", "PTS", "PTS_opponent"],
+        ["Posession", "Posession_opponent", "Posession", "Posession_opponent"],
+    ):
+        df_game_summary[f"{num}_per_{denom}"] = (
+            100 * df_game_summary[num] / df_game_summary[denom]
+        )
     return df_game_summary
