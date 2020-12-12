@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-from typing import Dict, Optional
+from typing import Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -162,7 +162,7 @@ class LinePlotly(BasePlotly):
         self,
         data: pd.DataFrame,
         xcol: str,
-        ycol: str,
+        ycol: Union[str, List[str]],
         linewidth: int = 2,
         rangeslider: bool = False,
         slider_type: str = "date",
@@ -186,12 +186,13 @@ class LinePlotly(BasePlotly):
         if type(ycol) == list:
             trace = []
             for i in range(len(ycol)):
+                color = self.colors[i] if len(self.colors) >= len(ycol) else None
                 t = go.Scatter(
                     x=data[xcol].values,
                     y=data[ycol[i]].values,
                     mode="lines",
                     name=data[ycol[i]].name,
-                    line=dict(width=linewidth, color=self.colors[i]),
+                    line=dict(width=linewidth, color=color),
                 )
                 trace.append(t)
         else:
@@ -204,8 +205,21 @@ class LinePlotly(BasePlotly):
                     line=dict(width=linewidth, color=self.colors[0]),
                 )
             ]
+        yaxis_range_min = (
+            0
+            if data.loc[:, ycol].values.min() > 0
+            else data.loc[:, ycol].values.min() * 1.05
+        )
+        yaxis_range_max = data.loc[:, ycol].values.max() * 1.05
         layout = go.Layout(
-            title=title, xaxis=xaxis, yaxis=dict(title=ytitle, ticklen=5, gridwidth=2)
+            title=title,
+            xaxis=xaxis,
+            yaxis=dict(
+                title=ytitle,
+                ticklen=5,
+                gridwidth=2,
+                range=[yaxis_range_min, yaxis_range_max],
+            ),
         )
         fig = go.Figure(data=trace, layout=layout)
         if save_path is not None:
