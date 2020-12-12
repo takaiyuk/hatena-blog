@@ -10,11 +10,28 @@ import plotly.offline as py
 class BasePlotly(metaclass=ABCMeta):
     colors = ["#3D0553", "#4D798C", "#7DC170", "#F7E642"]
 
+    def __init__(self, is_debug=False):
+        self.is_debug = is_debug
+
     def _convert_to_str(self, arr: np.array) -> np.array:
         return np.array(arr, dtype=str)
 
+    def _scale(self, x: np.array) -> np.array:
+        rate = np.max(x) / 10
+        return x / rate
+
+    @abstractmethod
+    def _plotly_trace(self) -> List[Union[go.Bar, go.Box, go.Histogram, go.Scatter]]:
+        pass
+
     def _plotly_layout(
-        self, title: str = None, xtitle: str = None, ytitle: str = None
+        self,
+        title: Optional[str] = None,
+        xtitle: Optional[str] = None,
+        ytitle: Optional[str] = None,
+        data: Optional[pd.DataFrame] = None,
+        ycol: Optional[List[str]] = None,
+        **kwargs,
     ) -> go.Layout:
         return go.Layout(
             title=title,
@@ -25,22 +42,47 @@ class BasePlotly(metaclass=ABCMeta):
     def _save(self, fig: go.Figure, path: str):
         fig.write_image(path, width=1200, height=600)
 
-    @abstractmethod
-    def show(self):
-        pass
-
-
-class BarPlotly(BasePlotly):
     def show(
         self,
         data: pd.DataFrame,
-        xcol: str,
-        ycol: str,
-        is_horizontal: bool = False,
+        xcol: Optional[str] = None,
+        ycol: Optional[Union[str, List[str]]] = None,
         title: Optional[str] = None,
         xtitle: Optional[str] = None,
         ytitle: Optional[str] = None,
         save_path: Optional[str] = None,
+        **kwargs,
+    ):
+        trace = self._plotly_trace(
+            data=data,
+            xcol=xcol,
+            ycol=ycol,
+            title=title,
+            xtitle=xtitle,
+            ytitle=ytitle,
+            save_path=save_path,
+            **kwargs,
+        )
+        layout = self._plotly_layout(
+            title=title, xtitle=xtitle, ytitle=ytitle, data=data, ycol=ycol, **kwargs
+        )
+        fig = go.Figure(data=trace, layout=layout)
+        if save_path is not None:
+            self._save(fig, save_path)
+        return py.iplot(fig, show_link=False)
+
+
+class BarPlotly(BasePlotly):
+    def _plotly_trace(
+        self,
+        data: pd.DataFrame,
+        xcol: str,
+        ycol: str,
+        title: Optional[str] = None,
+        xtitle: Optional[str] = None,
+        ytitle: Optional[str] = None,
+        save_path: Optional[str] = None,
+        is_horizontal: bool = False,
     ):
         orientation = "v"
         color_col = ycol
@@ -64,15 +106,11 @@ class BarPlotly(BasePlotly):
                 orientation=orientation,
             )
         ]
-        layout = self._plotly_layout(title=title, xtitle=xtitle, ytitle=ytitle)
-        fig = go.Figure(data=trace, layout=layout)
-        if save_path is not None:
-            self._save(fig, save_path)
-        return py.iplot(fig, show_link=False)
+        return trace
 
 
 class BoxPlotly(BasePlotly):
-    def show(
+    def _plotly_trace(
         self,
         data: pd.DataFrame,
         xcol: Optional[str] = None,
@@ -96,18 +134,15 @@ class BoxPlotly(BasePlotly):
             trace = [go.Box(y=data[ycol].values, marker=dict(color=self.colors[0]))]
         elif ycol is None:
             trace = [go.Box(x=data[xcol].values, marker=dict(color=self.colors[0]))]
-        layout = self._plotly_layout(title=title, xtitle=xtitle, ytitle=ytitle)
-        fig = go.Figure(data=trace, layout=layout)
-        if save_path is not None:
-            self._save(fig, save_path)
-        return py.iplot(fig, show_link=False)
+        return trace
 
 
 class CountPlotly(BasePlotly):
-    def show(
+    def _plotly_trace(
         self,
         data: pd.DataFrame,
         xcol: str,
+        ycol=None,
         title: Optional[str] = None,
         xtitle: Optional[str] = None,
         ytitle: Optional[str] = None,
@@ -118,23 +153,20 @@ class CountPlotly(BasePlotly):
                 x=data[xcol].values, histfunc="count", marker=dict(color=self.colors[0])
             )
         ]
-        layout = self._plotly_layout(title=title, xtitle=xtitle, ytitle=ytitle)
-        fig = go.Figure(data=trace, layout=layout)
-        if save_path is not None:
-            self._save(fig, save_path)
-        return py.iplot(fig, show_link=False)
+        return trace
 
 
 class DistPlotly(BasePlotly):
-    def show(
+    def _plotly_trace(
         self,
         data: pd.DataFrame,
         xcol: str,
-        xbins: Optional[Dict[str, int]] = None,
+        ycol=None,
         title: Optional[str] = None,
         xtitle: Optional[str] = None,
         ytitle: Optional[str] = None,
         save_path: Optional[str] = None,
+        xbins: Optional[Dict[str, int]] = None,
     ):
         """
         xbins: 区間の指定
@@ -150,39 +182,21 @@ class DistPlotly(BasePlotly):
                 xbins=xbins,
             )
         ]
-        layout = self._plotly_layout(title=title, xtitle=xtitle, ytitle=ytitle)
-        fig = go.Figure(data=trace, layout=layout)
-        if save_path is not None:
-            self._save(fig, save_path)
-        return py.iplot(fig, show_link=False)
+        return trace
 
 
 class LinePlotly(BasePlotly):
-    def show(
+    def _plotly_trace(
         self,
         data: pd.DataFrame,
         xcol: str,
         ycol: Union[str, List[str]],
-        linewidth: int = 2,
-        rangeslider: bool = False,
-        slider_type: str = "date",
         title: Optional[str] = None,
         xtitle: Optional[str] = None,
         ytitle: Optional[str] = None,
         save_path: Optional[str] = None,
+        linewidth: int = 2,
     ):
-        if rangeslider is True:
-            xaxis = dict(
-                title=xtitle,
-                ticklen=5,
-                zeroline=False,
-                gridwidth=2,
-                rangeslider=dict(visible=True),
-                type=slider_type,
-            )
-        else:
-            xaxis = dict(title=xtitle, ticklen=5, zeroline=False, gridwidth=2)
-
         if type(ycol) == list:
             trace = []
             for i in range(len(ycol)):
@@ -205,6 +219,30 @@ class LinePlotly(BasePlotly):
                     line=dict(width=linewidth, color=self.colors[0]),
                 )
             ]
+        return trace
+
+    def _plotly_layout(
+        self,
+        title,
+        xtitle,
+        ytitle,
+        data,
+        ycol,
+        rangeslider: bool = False,
+        slider_type: str = "date",
+    ):
+        if rangeslider is True:
+            xaxis = dict(
+                title=xtitle,
+                ticklen=5,
+                zeroline=False,
+                gridwidth=2,
+                rangeslider=dict(visible=True),
+                type=slider_type,
+            )
+        else:
+            xaxis = dict(title=xtitle, ticklen=5, zeroline=False, gridwidth=2)
+
         yaxis_range_min = (
             0
             if data.loc[:, ycol].values.min() > 0
@@ -221,24 +259,33 @@ class LinePlotly(BasePlotly):
                 range=[yaxis_range_min, yaxis_range_max],
             ),
         )
-        fig = go.Figure(data=trace, layout=layout)
-        if save_path is not None:
-            self._save(fig, save_path)
-        return py.iplot(fig, show_link=False)
+        return layout
 
 
 class ScatterPlotly(BasePlotly):
-    def show(
+    def _plotly_trace(
         self,
         data: pd.DataFrame,
         xcol: str,
         ycol: str,
-        size: int = 1,
         title: Optional[str] = None,
         xtitle: Optional[str] = None,
         ytitle: Optional[str] = None,
         save_path: Optional[str] = None,
+        size_col: Optional[int] = None,
+        text_col: Optional[int] = None,
     ):
+        if len(data) > 5000:
+            print("[WARNING] data size is too large for scatterplot to display")
+            data = data.sample(5000, random_state=42)
+        size = None
+        sizeref = None
+        if size_col is not None:
+            size = self._scale(data[size_col].values)
+            sizeref = 2.0 * max(size) / ((max(size) / 2) ** 2)
+        text = None
+        if text_col is not None:
+            text = self._convert_to_str(data[text_col].values)
         trace = [
             go.Scatter(
                 x=self._convert_to_str(data[xcol].values),
@@ -246,16 +293,19 @@ class ScatterPlotly(BasePlotly):
                 mode="markers",
                 marker=dict(
                     sizemode="diameter",
-                    sizeref=1,
-                    size=data[ycol].values ** size,
+                    sizeref=sizeref,
+                    size=size,
                     color=data[ycol].values,
                     colorscale="Viridis",
                     reversescale=True,
                     showscale=True,
                 ),
-                text=self._convert_to_str(data[xcol].values),
+                text=text,
             )
         ]
+        return trace
+
+    def _plotly_layout(self, title, xtitle, ytitle, data=None, ycol=None, **kwargs):
         layout = go.Layout(
             autosize=True,
             title=title,
@@ -264,7 +314,4 @@ class ScatterPlotly(BasePlotly):
             yaxis=dict(title=ytitle, ticklen=5, gridwidth=2),
             showlegend=False,
         )
-        fig = go.Figure(data=trace, layout=layout)
-        if save_path is not None:
-            self._save(fig, save_path)
-        return py.iplot(fig, show_link=False)
+        return layout
