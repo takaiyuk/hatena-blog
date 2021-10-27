@@ -1,6 +1,6 @@
 catboost==0.22
 category-encoders==2.1.0
-dask==2.9.2
+dask==2021.10.0
 hydra-core==0.11.3
 ipywidgets==7.5.1
 joblib==0.14.1
